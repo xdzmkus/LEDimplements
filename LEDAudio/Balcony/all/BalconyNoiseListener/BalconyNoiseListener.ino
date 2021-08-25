@@ -1,42 +1,97 @@
 #if defined(ESP8266)
-#define LED_PIN D5  // leds pin
-#define LEFT_PIN A0
-#define RIGHT_PIN A0
+#define BTN_PIN  D0 // button pin
+#define ENC1_PIN D1 // encoder S1 pin
+#define ENC2_PIN D2	// encoder S2 pin
+#define MIC_PIN  A0 // not connected analog pin
 #elif defined(ESP32)
-#define LED_PIN  16 // leds pin
-#define LEFT_PIN A0
-#define RIGHT_PIN A0
+#define BTN_PIN  5  // button pin
+#define ENC1_PIN 19 // encoder S1 pin
+#define ENC2_PIN 18	// encoder S2 pin
+#define MIC_PIN  35 // not connected analog pin
 #else
-#define LED_PIN 9   // leds pin
-#define LEFT_PIN A0
-#define RIGHT_PIN A1
+#define BTN_PIN  4  // button pin
+#define ENC1_PIN 3  // encoder S1 pin
+#define ENC2_PIN 2	// encoder S2 pin
+#define MIC_PIN  A0 // not connected analog pin
 #endif
 
-#define MATRIX_H 11
-#define MATRIX_W 36
-#define CURRENT_LIMIT 16000
-#define BRIGHTNESS 120
+#include <ArduinoDebounceButton.h>
+ArduinoDebounceButton btn(BTN_PIN, BUTTON_CONNECTED::GND, BUTTON_NORMAL::OPEN);
 
-#include <FastLED.h>
-CRGB leds[(MATRIX_H * MATRIX_W)];
+#include <ArduinoRotaryEncoder.h>
+ArduinoRotaryEncoder encoder(ENC2_PIN, ENC1_PIN);
 
-#include <ZigZagFromTopLeftToBottomAndRight.hpp>
-#include <LEDAudioEffects.h>
+#include <EventsQueue.hpp>
+EventsQueue<ENCODER_EVENT, 8> queue;
 
-VUMeterMatrixLedEffect<ZigZagFromTopLeftToBottomAndRight, leds, MATRIX_W, MATRIX_H> effect(30, 512);
+#if defined(ESP8266)
+IRAM_ATTR
+#endif
+void catchEncoderTicks()
+{
+    encoder.catchTicks();
+}
 
-bool whichChannel = false;
+void handleEncoderEvent(const RotaryEncoder* enc, ENCODER_EVENT eventType)
+{
+    queue.push(eventType);
+}
+
+void processEncoder()
+{
+    bool processEncEvent;
+    ENCODER_EVENT encEvent;
+
+    do
+    {
+        noInterrupts();
+
+        processEncEvent = queue.length();
+
+        if (processEncEvent)
+        {
+            encEvent = queue.pop();
+        }
+
+        interrupts();
+
+        if (processEncEvent)
+        {
+            switch (encEvent)
+            {
+            case ENCODER_EVENT::LEFT:
+                adjustBrightness(-5);
+                break;
+            case ENCODER_EVENT::RIGHT:
+                adjustBrightness(5);
+                break;
+            default:
+                break;
+            }
+        }
+    } while (processEncEvent);
+}
+
+void handleButtonEvent(const DebounceButton* button, BUTTON_EVENT eventType)
+{
+    switch (eventType)
+    {
+    case BUTTON_EVENT::Clicked:
+        changeEffect();
+        break;
+    case BUTTON_EVENT::DoubleClicked:
+        turnOnLeds();
+        break;
+    case BUTTON_EVENT::LongPressed:
+        turnOffLeds();
+        break;
+    default:
+        break;
+    }
+}
 
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
-
-void setup_LED()
-{
-    FastLED.addLeds<WS2812B, LED_PIN, GRB>(leds, (MATRIX_H * MATRIX_W));
-    FastLED.setMaxPowerInVoltsAndMilliamps(5, CURRENT_LIMIT);
-    FastLED.setBrightness(BRIGHTNESS);
-    FastLED.clear(true);
-}
 
 void setup()
 {
@@ -53,51 +108,45 @@ void setup()
 
 #endif // ADCSRA
 
-    analogReference(EXTERNAL);
+//    analogReference(INTERNAL);
 
     setup_LED();
 
-    effect.start();
+    btn.initPin();
+
+    btn.setEventHandler(handleButtonEvent);
+
+    encoder.initPins();
+
+    encoder.setEventHandler(handleEncoderEvent);
+
+    attachInterrupt(digitalPinToInterrupt(ENC1_PIN), catchEncoderTicks, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(ENC2_PIN), catchEncoderTicks, CHANGE);
+
+    turnOnLeds();
 }
 
 void loop()
 {
-    if (effect.isReady())
-    {
-        uint16_t r = 0;
-        uint16_t l = 0;
-        analyzeAudio(r, l);
-//      effect.autoGain(max(r, l));
-        effect.paint(r, l);
-        FastLED.show();
-    }
+    btn.check();
+
+    processEncoder();
+
+    processLED();
 }
 
 void analyzeAudio(uint16_t& r, uint16_t& l)
 {
-    r = l = 0;
-    uint16_t rMin = -1;
-    uint16_t lMin = -1;
-
-    bool rightChannel = true;
+    uint16_t rMin = -1; // MAX_UINT16_T
 
     for (uint16_t i = 0; i < 256; i++)
     {
-        uint16_t value = analogRead(rightChannel ? RIGHT_PIN : LEFT_PIN);
+        uint16_t value = analogRead(MIC_PIN);
 
-        if (rightChannel)
-        {
-            if (value > r) r = value;
-            if (value < rMin) rMin = value;
-        }
-        else
-        {
-            if (value > l) l = value;
-            if (value < lMin) lMin = value;
-        }
-        rightChannel = !rightChannel;
+        if (value > r) r = value;
+        if (value < rMin) rMin = value;
     }
 
     r -= rMin;
-    l -= lMin;
+    l = r;
 }
