@@ -1,4 +1,12 @@
-#define DYNAMIC_EFFECTS
+//#define DEBUG_OUTPUT
+
+#ifndef DEBUG_OUTPUT
+#define log_print(msg)
+#define log_println(msg)
+#else
+#define log_print(msg) Serial.print(msg)
+#define log_println(msg) Serial.println(msg)
+#endif
 
 #if defined(ESP8266)
 #define LED_PIN  D5 // leds pin
@@ -36,27 +44,33 @@ EventsQueue<ENCODER_EVENT, 10> queue;
 char EFFECT_NAME[EEPROM_EFFECT_LENGTH + 1];
 
 #include <FastLED.h>
-#define NUM_LEDS 240
-#define CURRENT_LIMIT 8000
+
+#define MATRIX_H 11
+#define MATRIX_W 36
+
+#define CURRENT_LIMIT 15000
 
 uint8_t brightness = 100;
 
-CRGB leds[NUM_LEDS];
+CRGB leds[(MATRIX_H * MATRIX_W)];
 
-#ifdef DYNAMIC_EFFECTS
-#include <DynamicLEDLine.hpp>
-DynamicLEDLine<leds, NUM_LEDS> ledLine;
-#else
-#include <StaticLEDLine.hpp>
-StaticLEDLine<leds, NUM_LEDS> ledLine;
-#endif
+#include <ZigZagFromTopLeftToBottomAndRight.hpp>
+
+#include "MinimalLEDMatrix.hpp"
+MinimalLEDMatrix<ZigZagFromTopLeftToBottomAndRight, leds, MATRIX_W, MATRIX_H> ledMatrix;
+
+
+#include <EffectTimer.hpp>
+#define EFFECT_DURATION_SEC 300
+MillisTimer tickerEffects(EFFECT_DURATION_SEC* MillisTimer::CLOCKS_IN_SEC);
+
 
 void loadState()
 {
-	Serial.println(F("LEDLine EFFECTS:"));
-	for (uint8_t var = 0; var < ledLine.howManyEffects(); var++)
+	log_println(F("ledMatrix EFFECTS:"));
+	for (uint8_t var = 0; var < ledMatrix.howManyEffects(); var++)
 	{
-		Serial.println(ledLine.getAllEffectsNames()[var]);
+		log_println(ledMatrix.getAllEffectsNames()[var]);
 	}
 
 #if defined(ESP32) || defined(ESP8266)
@@ -70,23 +84,23 @@ void loadState()
 
 	EFFECT_NAME[EEPROM_EFFECT_LENGTH] = '\0';
 
-	if (ledLine.setEffectByName(EFFECT_NAME))
+	if (ledMatrix.setEffectByName(EFFECT_NAME))
 	{
-		Serial.print(F("LOADED EFFECT: "));
+		log_print(F("LOADED EFFECT: "));
 	}
 	else
 	{
-		Serial.print(F("WRONG EFFECT: "));
+		log_print(F("WRONG EFFECT: "));
 	}
 
-	Serial.println(EFFECT_NAME);
+	log_println(EFFECT_NAME);
 
-	ledLine.turnOn();
+	ledMatrix.turnOn();
 }
 
 void saveState()
 {
-	strncpy(EFFECT_NAME, (ledLine.getEffectName() == nullptr || !ledLine.isOn()) ? "OFF" : ledLine.getEffectName(), EEPROM_EFFECT_LENGTH);
+	strncpy(EFFECT_NAME, (ledMatrix.getEffectName() == nullptr || !ledMatrix.isOn()) ? "OFF" : ledMatrix.getEffectName(), EEPROM_EFFECT_LENGTH);
 
 #if defined(ESP32) || defined(ESP8266)
 	EEPROM.begin(EEPROM_EFFECT_LENGTH + 1);
@@ -100,27 +114,27 @@ void saveState()
 	EEPROM.commit();
 #endif
 
-	ledLine.turnOff();
+	ledMatrix.turnOff();
 
-	Serial.print(F("SAVED EFFECT: "));
-	Serial.println(EFFECT_NAME);
+	log_print(F("SAVED EFFECT: "));
+	log_println(EFFECT_NAME);
 }
 
 void changeEffect()
 {
-	ledLine.setNextEffect();
-	ledLine.turnOn();
+	ledMatrix.setNextEffect();
+	ledMatrix.turnOn();
 
-	Serial.print(F("EFFECT: "));
-	Serial.println(ledLine.getEffectName());
+	log_print(F("EFFECT: "));
+	log_println(ledMatrix.getEffectName());
 }
 
 void turnOffLeds()
 {
-	ledLine.turnOff();
+	ledMatrix.turnOff();
 	FastLED.clear(true);
 
-	Serial.println(F("OFF"));
+	log_println(F("OFF"));
 }
 
 void adjustBrightness(int8_t delta)
@@ -128,8 +142,8 @@ void adjustBrightness(int8_t delta)
 	brightness += delta;
 	FastLED.setBrightness(brightness);
 
-	Serial.print(F("BRIGHTNESS: "));
-	Serial.println(brightness);
+	log_print(F("BRIGHTNESS: "));
+	log_println(brightness);
 }
 
 void handleButtonEvent(const DebounceButton* button, BUTTON_EVENT eventType)
@@ -201,7 +215,7 @@ void processEncoder()
 
 void setupLED()
 {
-	FastLED.addLeds<WS2812B, LED_PIN, GRB>(leds, NUM_LEDS).setCorrection(TypicalSMD5050);
+	FastLED.addLeds<WS2812B, LED_PIN, GRB>(leds, (MATRIX_H * MATRIX_W)).setCorrection(TypicalSMD5050);
 	FastLED.setMaxPowerInVoltsAndMilliamps(5, CURRENT_LIMIT);
 	FastLED.setBrightness(brightness);
 	FastLED.clear(true);
@@ -211,7 +225,9 @@ void setup()
 {
 	randomSeed(analogRead(UNPINNED_ANALOG_PIN));
 
-	Serial.begin(115200);
+#ifdef DEBUG_OUTPUT
+    Serial.begin(115200);
+#endif
 
 	setupLED();
 
@@ -227,6 +243,8 @@ void setup()
 	attachInterrupt(digitalPinToInterrupt(ENC2_PIN), catchEncoderTicks, CHANGE);
 
 	loadState();
+
+	tickerEffects.start();
 }
 
 void loop()
@@ -235,8 +253,13 @@ void loop()
 
 	processEncoder();
 
-	if (ledLine.refresh())
+	if (ledMatrix.refresh())
 	{
 		FastLED.show();
+	}
+
+	if (tickerEffects.isReady())
+	{
+		changeEffect();
 	}
 }

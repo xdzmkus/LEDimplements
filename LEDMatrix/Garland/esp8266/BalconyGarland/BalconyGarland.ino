@@ -1,4 +1,4 @@
-#define DEBUG_OUTPUT
+//#define DEBUG_OUTPUT
 
 #ifndef DEBUG_OUTPUT
 #define log_print(msg)
@@ -11,9 +11,9 @@
 #define BTN_PIN  D0 // button pin
 #define ENC1_PIN D1 // encoder S1 pin
 #define ENC2_PIN D2	// encoder S2 pin
+
 #define UNPINNED_ANALOG_PIN A0 // not connected analog pin
 
-/********** Encoder button module ***********/
 #include <ArduinoDebounceButton.h>
 ArduinoDebounceButton btn(BTN_PIN, BUTTON_CONNECTED::GND, BUTTON_NORMAL::OPEN);
 
@@ -25,8 +25,6 @@ EventsQueue<ENCODER_EVENT, 10> queue;
 
 #include <Ticker.h>
 Ticker builtinLedTicker;
-
-/********************************************/
 
 IRAM_ATTR void catchEncoderTicks()
 {
@@ -78,7 +76,7 @@ void handleButtonEvent(const DebounceButton* button, BUTTON_EVENT eventType)
 	switch (eventType)
 	{
 	case BUTTON_EVENT::Clicked:
-		changeEffect();
+		setNextEffect();
 		break;
 	case BUTTON_EVENT::DoubleClicked:
 		turnOnLeds();

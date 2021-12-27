@@ -28,7 +28,7 @@ private:
 		"LAVA_NOISE"
 	};
 
-	static const uint8_t NUM_EFFECTS = 17;
+	static const uint8_t NUM_EFFECTS = 16;
 	const char* availableEffects[NUM_EFFECTS] =
 	{
 		ColorsLedEffect<leds, width * height>::name,
@@ -36,9 +36,8 @@ private:
 		RainbowLedEffect<leds, width * height>::name,
 
 		BugsMatrixLedEffect<MATRIX, ledLine, width, height>::name,
-		BouncingBallsMatrixLedEffect<MATRIX, ledLine, width, height>::name,
 		noiseEffects[OCEAN],
-		SnowMatrixLedEffect<MATRIX, ledLine, width, height>::name,
+		BouncingBallsMatrixLedEffect<MATRIX, ledLine, width, height>::name,
 		noiseEffects[RAINBOW],
 		StarfallMatrixLedEffect<MATRIX, ledLine, width, height>::name,
 		noiseEffects[CLOUD],
@@ -102,10 +101,10 @@ public:
 		{
 			delete effect; effect = new SinusMatrixLedEffect<MATRIX, ledLine, width, height>(random(10, 50));
 		}
-		else if (strcmp(SnowMatrixLedEffect<MATRIX, ledLine, width, height>::name, effectName) == 0)
-		{
-			delete effect; effect = new SnowMatrixLedEffect<MATRIX, ledLine, width, height>(random(1, 5), 10000);
-		}
+//		else if (strcmp(SnowMatrixLedEffect<MATRIX, ledLine, width, height>::name, effectName) == 0)
+//		{
+//			delete effect; effect = new SnowMatrixLedEffect<MATRIX, ledLine, width, height>(random(1, 5), 10000);
+//		}
 		else if (strcmp(StarfallMatrixLedEffect<MATRIX, ledLine, width, height>::name, effectName) == 0)
 		{
 			delete effect; effect = new StarfallMatrixLedEffect<MATRIX, ledLine, width, height>(random(10, 30));

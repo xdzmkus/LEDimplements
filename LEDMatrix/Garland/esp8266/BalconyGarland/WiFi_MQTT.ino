@@ -69,7 +69,7 @@ void setAction_callback(uint32_t x)
 		turnOffLeds();
 		break;
 	case NEXT_CODE:
-		changeEffect();
+		setNextEffect();
 		break;
 	default:
 		break;

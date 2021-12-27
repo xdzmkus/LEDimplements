@@ -1,16 +1,18 @@
 
 /*********** WS2812B leds *******************/
+#if defined(ESP8266)
 #define FASTLED_FORCE_SOFTWARE_SPI
 #define FASTLED_FORCE_SOFTWARE_PINS
 #define LED_PIN  D5 // leds pin
+#endif
 
-#define MATRIX_H 8
-#define MATRIX_W 32
-#define CURRENT_LIMIT 8000
+#define MATRIX_H 11
+#define MATRIX_W 36
+#define CURRENT_LIMIT 12000
 
-#define EFFECT_DURATION_SEC 45
+#define EFFECT_DURATION_SEC 60
 
-uint8_t brightness = 40;
+uint8_t brightness = 100;
 
 #include <FastLED.h>
 CRGB leds[(MATRIX_H * MATRIX_W)];
@@ -25,7 +27,7 @@ Ticker effectsTicker;
 
 void setup_LED()
 {
-    FastLED.addLeds<WS2812B, LED_PIN, GRB>(leds, (MATRIX_H * MATRIX_W)).setCorrection(TypicalSMD5050);
+    FastLED.addLeds<WS2812B, LED_PIN, GRB>(leds, (MATRIX_H * MATRIX_W));
     FastLED.setMaxPowerInVoltsAndMilliamps(5, CURRENT_LIMIT);
     FastLED.setBrightness(brightness);
     FastLED.clear(true);
@@ -46,7 +48,7 @@ void turnOnLeds()
 	ledMatrix.setEffectByIdx(0);
 	ledMatrix.turnOn();
 
-	effectsTicker.attach(EFFECT_DURATION_SEC, changeEffect);
+	effectsTicker.attach(EFFECT_DURATION_SEC, nextEffect);
 
 	publishState();
 }
@@ -62,13 +64,21 @@ void turnOffLeds()
 	publishState();
 }
 
-void changeEffect()
+void nextEffect()
+{
+	ledMatrix.setNextEffect();
+
+	log_print(F("EFFECT: "));
+	log_println(ledMatrix.getEffectName());
+
+	publishState();
+}
+
+void setNextEffect()
 {
 	effectsTicker.detach();
 
 	ledMatrix.setNextEffect();
-
-	effectsTicker.attach(EFFECT_DURATION_SEC, changeEffect);
 
 	log_print(F("EFFECT: "));
 	log_println(ledMatrix.getEffectName());
@@ -82,6 +92,9 @@ void setEffect(const char* data)
 	{
 		effectsTicker.detach();
 	}
+
+	log_print(F("EFFECT: "));
+	log_println(ledMatrix.getEffectName());
 
 	publishState();
 }
