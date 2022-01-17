@@ -1,17 +1,10 @@
-#define DEBUG_OUTPUT
-
-#ifndef DEBUG_OUTPUT
-#define log_print(msg)
-#define log_println(msg)
-#else
-#define log_print(msg) Serial.print(msg)
-#define log_println(msg) Serial.println(msg)
-#endif
-
 #define BTN_PIN  D0 // button pin
 #define ENC1_PIN D1 // encoder S1 pin
 #define ENC2_PIN D2	// encoder S2 pin
 #define UNPINNED_ANALOG_PIN A0 // not connected analog pin
+
+#include "WifiMQTT.h"
+#include "LEDMatrixMQTT.h"
 
 /********** Encoder button module ***********/
 #include <ArduinoDebounceButton.h>
@@ -78,7 +71,7 @@ void handleButtonEvent(const DebounceButton* button, BUTTON_EVENT eventType)
 	switch (eventType)
 	{
 	case BUTTON_EVENT::Clicked:
-		changeEffect();
+		holdNextEffect();
 		break;
 	case BUTTON_EVENT::DoubleClicked:
 		turnOnLeds();
@@ -89,8 +82,6 @@ void handleButtonEvent(const DebounceButton* button, BUTTON_EVENT eventType)
 	default:
 		return;
 	}
-
-	publishState();
 }
 
 void blinkLED()
@@ -111,11 +102,14 @@ void setup()
 	digitalWrite(LED_BUILTIN, LOW);      // Turn the LED on by making the voltage LOW
 
 	btn.initPin();
+	
+	delay(WifiMQTT.BOOT_TIMEOUT);
 
 	builtinLedTicker.attach_ms(500, blinkLED);  // Blink led while setup
 
-	connect_WiFi();
-	setup_MQTT();
+	bool f_setupMode = btn.check();
+
+	WifiMQTT.init(f_setupMode);
 
 	encoder.initPins();
 	encoder.setEventHandler(handleEncoderEvent);
@@ -137,7 +131,7 @@ void loop()
 
 	processEncoder();
 
-	processMQTT();
+	WifiMQTT.process();
 
 	processLED();
 }

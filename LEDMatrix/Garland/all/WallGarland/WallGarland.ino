@@ -1,13 +1,22 @@
+#if defined(ESP8266)
 #define BTN_PIN  D0 // button pin
 #define ENC1_PIN D1 // encoder S1 pin
 #define ENC2_PIN D2	// encoder S2 pin
-
 #define UNPINNED_ANALOG_PIN A0 // not connected analog pin
+#elif defined(ESP32)
+#define BTN_PIN  5  // button pin
+#define ENC1_PIN 19 // encoder S1 pin
+#define ENC2_PIN 18	// encoder S2 pin
+#define UNPINNED_ANALOG_PIN 35 // not connected analog pin
+#else
+#define BTN_PIN   4	  // button pin
+#define ENC1_PIN  2   // encoder S1 pin
+#define ENC2_PIN  3	  // encoder S2 pin
+#define UNPINNED_ANALOG_PIN A0 // not connected analog pin
+#endif
 
-#include "WifiMQTT.h"
-#include "LEDMatrixMQTT.h"
+#include "LEDMatrixTimer.h"
 
-/********** Encoder button module ***********/
 #include <ArduinoDebounceButton.h>
 ArduinoDebounceButton btn(BTN_PIN, BUTTON_CONNECTED::GND, BUTTON_NORMAL::OPEN);
 
@@ -15,14 +24,13 @@ ArduinoDebounceButton btn(BTN_PIN, BUTTON_CONNECTED::GND, BUTTON_NORMAL::OPEN);
 ArduinoRotaryEncoder encoder(ENC2_PIN, ENC1_PIN);
 
 #include <EventsQueue.hpp>
-EventsQueue<ENCODER_EVENT, 10> queue;
+EventsQueue<ENCODER_EVENT, 8> queue;
 
-#include <Ticker.h>
-Ticker builtinLedTicker;
 
-/********************************************/
-
-IRAM_ATTR void catchEncoderTicks()
+#if defined(ESP8266)
+IRAM_ATTR
+#endif
+void catchEncoderTicks()
 {
 	encoder.catchTicks();
 }
@@ -85,43 +93,23 @@ void handleButtonEvent(const DebounceButton* button, BUTTON_EVENT eventType)
 	}
 }
 
-void blinkLED()
-{
-	//toggle LED state
-	digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-}
-
 void setup()
 {
-	Serial.begin(115200);
+//	Serial.begin(115200);
 
 	randomSeed(analogRead(UNPINNED_ANALOG_PIN));
 
 	setup_LED();
 
-	pinMode(LED_BUILTIN, OUTPUT);        // Initialize the BUILTIN_LED pin as an output
-	digitalWrite(LED_BUILTIN, LOW);      // Turn the LED on by making the voltage LOW
-
 	btn.initPin();
 
-	delay(WifiMQTT.BOOT_TIMEOUT);
-
-	builtinLedTicker.attach_ms(500, blinkLED);  // Blink led while setup
-
-	bool f_setupMode = btn.check();
-
-	WifiMQTT.init(f_setupMode);
+	btn.setEventHandler(handleButtonEvent);
 
 	encoder.initPins();
 	encoder.setEventHandler(handleEncoderEvent);
 
 	attachInterrupt(digitalPinToInterrupt(ENC1_PIN), catchEncoderTicks, CHANGE);
 	attachInterrupt(digitalPinToInterrupt(ENC2_PIN), catchEncoderTicks, CHANGE);
-
-	btn.setEventHandler(handleButtonEvent);
-
-	builtinLedTicker.detach();
-	digitalWrite(LED_BUILTIN, HIGH);    // Turn the LED off by making the voltage HIGH
 
 	turnOnLeds();
 }
@@ -132,8 +120,5 @@ void loop()
 
 	processEncoder();
 
-	WifiMQTT.process();
-
 	processLED();
 }
-

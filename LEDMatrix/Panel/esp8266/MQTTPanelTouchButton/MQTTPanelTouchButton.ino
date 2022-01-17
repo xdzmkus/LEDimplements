@@ -1,14 +1,8 @@
-#if defined(ESP8266)
 #define BTN_PIN  D0 // button pin
-#define ENC1_PIN D1 // encoder S1 pin
-#define ENC2_PIN D2	// encoder S2 pin
 #define UNPINNED_ANALOG_PIN A0 // not connected analog pin
-#elif defined(ESP32)
-#define BTN_PIN  5  // button pin
-#define ENC1_PIN 19 // encoder S1 pin
-#define ENC2_PIN 18	// encoder S2 pin
-#define UNPINNED_ANALOG_PIN 35 // not connected analog pin
-#endif
+
+#include "WifiMQTT.h"
+#include "LEDMatrixMQTT.h"
 
 /********** Touch button module ***********/
 #include <ArduinoDebounceButton.h>
@@ -55,7 +49,7 @@ void processBtn()
 			switch (btnEvent)
 			{
 			case BUTTON_EVENT::Clicked:
-				changeEffect();
+				holdNextEffect();
 				break;
 			case BUTTON_EVENT::DoubleClicked:
 				turnOnLeds();
@@ -67,7 +61,7 @@ void processBtn()
 				turnOffLeds();
 				break;
 			default:
-				break;
+				return;
 			}
 		}
 
@@ -93,12 +87,13 @@ void setup()
 
 	btn.initPin();
 
-	delay(5000);
+	delay(WifiMQTT.BOOT_TIMEOUT);
 
 	builtinLedTicker.attach_ms(500, blinkLED);  // Blink led while setup
 
-	connect_WiFi();
-	setup_MQTT();
+	bool f_setupMode = btn.check();
+
+	WifiMQTT.init(f_setupMode);
 
 	btn.setEventHandler(handleButtonEvent);
 
@@ -114,7 +109,7 @@ void loop()
 {
 	processBtn();
 
-	processMQTT();
+	WifiMQTT.process();
 
 	processLED();
 }
