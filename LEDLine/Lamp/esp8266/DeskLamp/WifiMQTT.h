@@ -2,7 +2,7 @@
 #define _WIFIMQTT_H_
 
 #define MQTT_DEBUG
-#define SERIAL_DEBUG
+//#define SERIAL_DEBUG
 
 #if true //__has_include("my_data_sensitive.h")
 #include "my_data_sensitive.h"
