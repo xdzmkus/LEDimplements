@@ -11,11 +11,9 @@
 
 #define UNPINNED_ANALOG_PIN A0 // not connected analog pin
 
-#define NUM_LEDS_LEFT   15
-#define NUM_LEDS_CENTER 24
-#define NUM_LEDS_RIGHT  8
+#define NUM_LEDS  17
 
-#define CURRENT_LIMIT 2000
+#define CURRENT_LIMIT 3500
 
 #define START_BRIGHTNESS 50
 
@@ -27,8 +25,8 @@
 #define OFF_CODE   2344
 #define NEXT_CODE  2747
 
-#include "WifiMQTT.h"
-WifiMQTT wifiMqtt;
+#include "WifiMQTTSlave.h"
+WifiMQTTSlave wifiMqtt;
 
 /*********** LED Line Effects ***************/
 
@@ -36,17 +34,13 @@ WifiMQTT wifiMqtt;
 #define FASTLED_FORCE_SOFTWARE_PINS
 
 #include <FastLED.h>
-CRGB ledsLeft[NUM_LEDS_LEFT];
-CRGB ledsCenter[NUM_LEDS_CENTER];
-CRGB ledsRight[NUM_LEDS_RIGHT];
+CRGB leds[NUM_LEDS];
 
-#include "LEDMultiLine.hpp"
-LEDMultiLine<ledsLeft, NUM_LEDS_LEFT> ledLineLeft;
-LEDMultiLine<ledsCenter, NUM_LEDS_CENTER> ledLineCenter;
-LEDMultiLine<ledsRight, NUM_LEDS_RIGHT> ledLineRight;
+#include "LEDWallLine.hpp"
+LEDWallLine<leds, NUM_LEDS> ledLine;
 
-#include "FastLEDThreeLinesMQTT.h"
-FastLEDThreeLinesMQTT mqttLeds(&wifiMqtt, &ledLineLeft, &ledLineCenter, &ledLineRight, START_BRIGHTNESS, EFFECT_DURATION_SEC);
+#include "FastLEDLineMQTT.h"
+FastLEDLineMQTT mqttLeds(&wifiMqtt, &ledLine, START_BRIGHTNESS, EFFECT_DURATION_SEC);
 
 /********** Button module ***********/
 #include <ArduinoDebounceButton.h>
@@ -64,9 +58,9 @@ Ticker builtinLedTicker;
 
 void setup_FastLED()
 {
-	FastLED.addLeds<WS2812B, LED_PIN_L, GRB>(ledsLeft, NUM_LEDS_LEFT).setCorrection(TypicalSMD5050);
-	FastLED.addLeds<WS2812B, LED_PIN_C, GRB>(ledsCenter, NUM_LEDS_CENTER).setCorrection(TypicalSMD5050);
-	FastLED.addLeds<WS2812B, LED_PIN_R, GRB>(ledsRight, NUM_LEDS_RIGHT).setCorrection(TypicalSMD5050);
+	FastLED.addLeds<WS2812B, LED_PIN_L, GRB>(leds, NUM_LEDS).setCorrection(TypicalSMD5050);
+	FastLED.addLeds<WS2812B, LED_PIN_C, GRB>(leds, NUM_LEDS).setCorrection(TypicalSMD5050);
+	FastLED.addLeds<WS2812B, LED_PIN_R, GRB>(leds, NUM_LEDS).setCorrection(TypicalSMD5050);
 
 	FastLED.setMaxPowerInVoltsAndMilliamps(5, CURRENT_LIMIT);
 }
