@@ -29,12 +29,9 @@ private:
 
 protected:
 
-	static WiFiClient client;
+	WiFiClient client;
 
-	static Adafruit_MQTT_Client mqtt;
-
-	static Adafruit_MQTT_Subscribe setEffect;
-	static Adafruit_MQTT_Subscribe performAction;
+	Adafruit_MQTT_Client mqtt;
 
 public:
 

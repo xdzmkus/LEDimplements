@@ -148,8 +148,8 @@ volatile bool WifiMQTTClass::f_pingMQTT = false;
 
 WiFiClient              WifiMQTTClass::client;
 Adafruit_MQTT_Client    WifiMQTTClass::mqtt(&client, MQTT_SERVER, MQTT_SERVERPORT, MQTT_USERNAME, MQTT_KEY);
-Adafruit_MQTT_Subscribe WifiMQTTClass::setEffect(&mqtt, MQTT_TOPIC_SUB1, MQTT_QOS_1);
-Adafruit_MQTT_Subscribe WifiMQTTClass::performAction(&mqtt, MQTT_TOPIC_SUB2, MQTT_QOS_1);
+Adafruit_MQTT_Subscribe WifiMQTTClass::setEffect(&mqtt, MQTT_TOPIC_SET_EFFECT, MQTT_QOS_1);
+Adafruit_MQTT_Subscribe WifiMQTTClass::performAction(&mqtt, MQTT_TOPIC_SET_ACTION, MQTT_QOS_1);
 Adafruit_MQTT_Subscribe WifiMQTTClass::setRunningString(&mqtt, MQTT_TOPIC_SUB3, MQTT_QOS_1);
 
 

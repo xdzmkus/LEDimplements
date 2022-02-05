@@ -1,5 +1,6 @@
-#define SERIAL_DEBUG
-#include"SerialDebug.h"
+#include "my_data_sensitive.h"
+
+#include "SerialDebug.h"
 
 #define RELAY_PIN D8 // GPIO15 - relay pin
 
@@ -23,12 +24,8 @@
 
 /*********** WIFI MQTT Manager ***************/
 
-#define ON_CODE    6735
-#define OFF_CODE   2344
-#define NEXT_CODE  2747
-
-#include "WifiMQTT.h"
-WifiMQTT wifiMqtt;
+#include "WifiMQTTLine.h"
+WifiMQTTLine wifiMqtt;
 
 /*********** LED Line Effects ***************/
 
@@ -71,20 +68,20 @@ void setup_FastLED()
 	FastLED.setMaxPowerInVoltsAndMilliamps(5, CURRENT_LIMIT);
 }
 
-void blinkLED()
+IRAM_ATTR void blinkLED()
 {
 	//toggle LED state
 	digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
 }
 
+IRAM_ATTR void check_button()
+{
+	btn.check();
+}
+
 void handleButtonEvent(const DebounceButton* button, BUTTON_EVENT eventType)
 {
 	queue.push(eventType);
-}
-
-void check_button()
-{
-	btn.check();
 }
 
 void processBtn()
@@ -132,7 +129,7 @@ void processBtn()
 	} while (processBtnEvent);
 }
 
-void performAction_callback(uint32_t x)
+void setAction_callback(uint32_t x)
 {
 	wifiMqtt.log(LOG_LEVEL::DEBUG, String(F("new action requested = ")) + String(x));
 

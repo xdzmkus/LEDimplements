@@ -19,8 +19,8 @@
 #define MQTT_KEY            "and password"
 
 #define MQTT_TOPIC_LOG      MQTT_USERNAME"/log"
-#define MQTT_TOPIC_SUB1     MQTT_USERNAME"/set/effect"
-#define MQTT_TOPIC_SUB2     MQTT_USERNAME"/set/action"
+#define MQTT_TOPIC_SET_EFFECT     MQTT_USERNAME"/set/effect"
+#define MQTT_TOPIC_SET_ACTION     MQTT_USERNAME"/set/action"
 #define MQTT_TOPIC_SUB3     MQTT_USERNAME"/set/runningString"
 
 #define ON_CODE             6735

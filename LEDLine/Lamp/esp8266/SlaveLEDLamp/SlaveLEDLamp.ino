@@ -1,5 +1,6 @@
-#define SERIAL_DEBUG
-#include"SerialDebug.h"
+#include "my_data_sensitive.h"
+
+#include "SerialDebug.h"
 
 #define RELAY_PIN D8 // GPIO15 - relay pin
 
@@ -21,12 +22,8 @@
 
 /*********** WIFI MQTT Manager ***************/
 
-#define ON_CODE    6735
-#define OFF_CODE   2344
-#define NEXT_CODE  2747
-
-#include "WifiMQTTSlave.h"
-WifiMQTTSlave wifiMqtt;
+#include "WifiMQTTLineSlave.h"
+WifiMQTTLineSlave wifiMqtt;
 
 /*********** LED Line Effects ***************/
 
@@ -65,20 +62,20 @@ void setup_FastLED()
 	FastLED.setMaxPowerInVoltsAndMilliamps(5, CURRENT_LIMIT);
 }
 
-void blinkLED()
+IRAM_ATTR void blinkLED()
 {
 	//toggle LED state
 	digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
 }
 
+IRAM_ATTR void check_button()
+{
+	btn.check();
+}
+
 void handleButtonEvent(const DebounceButton* button, BUTTON_EVENT eventType)
 {
 	queue.push(eventType);
-}
-
-void check_button()
-{
-	btn.check();
 }
 
 void processBtn()
@@ -126,9 +123,15 @@ void processBtn()
 	} while (processBtnEvent);
 }
 
-void performAction_callback(uint32_t x)
+void setAction_callback(uint32_t x)
 {
 	wifiMqtt.log(LOG_LEVEL::DEBUG, String(F("new action requested = ")) + String(x));
+
+	if (x <= 255)
+	{
+		mqttLeds.setBrightness(x);
+		return;
+	}
 
 	switch (x)
 	{
@@ -193,9 +196,6 @@ void setup()
 
 	builtinLedTicker.detach();
 	digitalWrite(LED_BUILTIN, HIGH);    // Turn the LED off by making the voltage HIGH
-
-	mqttLeds.turnOnLeds();
-	digitalWrite(RELAY_PIN, HIGH);
 }
 
 void loop()

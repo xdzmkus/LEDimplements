@@ -2,40 +2,52 @@
 
 #include "SerialDebug.h"
 
-#if defined(ESP8266)
-#define LED_PIN   D5 // leds pin
-#define BTN_PIN   D0 // GPIO16 - touch button pin
-#define UNPINNED_ANALOG_PIN A0 // not connected analog pin
-#elif defined(ESP32)
-#define LED_PIN  16 // leds pin
-#define BTN_PIN  5  // button pin
-#define UNPINNED_ANALOG_PIN 35 // not connected analog pin
-#endif
+#define RELAY_PIN D8 // GPIO15 - relay pin
 
-#define NUM_LEDS 256
-#define CURRENT_LIMIT 8000
-#define START_BRIGHTNESS 50
-#define EFFECT_DURATION_SEC 60
+#define LED_PIN_L D6 // GPIO12 - left strip
+#define LED_PIN_C D7 // GPIO13 - center strip
+#define LED_PIN_R D5 // GPIO14 - right strip
+
+#define BTN_PIN   D0 // GPIO16 - touch button pin
+
+#define UNPINNED_ANALOG_PIN A0 // not connected analog pin
+
+#define NUM_LEDS_LEFT   15
+#define NUM_LEDS_CENTER 24
+#define NUM_LEDS_RIGHT  8
+
+#define CURRENT_LIMIT 2000
+
+#define START_BRIGHTNESS 80
+
+#define EFFECT_DURATION_SEC 120
 
 /*********** WIFI MQTT Manager ***************/
 
-#include "WifiMQTTLine.h"
-WifiMQTTLine wifiMqtt;
+#include "WifiMQTTLineControl.h"
+WifiMQTTLineControl wifiMqtt;
 
 /*********** LED Line Effects ***************/
 
+#define FASTLED_FORCE_SOFTWARE_SPI
+#define FASTLED_FORCE_SOFTWARE_PINS
+
 #include <FastLED.h>
-CRGB leds[NUM_LEDS];
+CRGB ledsLeft[NUM_LEDS_LEFT];
+CRGB ledsCenter[NUM_LEDS_CENTER];
+CRGB ledsRight[NUM_LEDS_RIGHT];
 
-#include "LEDNewYear.hpp"
-LEDNewYear<leds, NUM_LEDS> ledLine;
+#include "LEDMultiLine.hpp"
+LEDMultiLine<ledsLeft, NUM_LEDS_LEFT> ledLineLeft;
+LEDMultiLine<ledsCenter, NUM_LEDS_CENTER> ledLineCenter;
+LEDMultiLine<ledsRight, NUM_LEDS_RIGHT> ledLineRight;
 
-#include "FastLEDLineMQTT.h"
-FastLEDLineMQTT mqttLeds(&wifiMqtt, &ledLine, START_BRIGHTNESS, EFFECT_DURATION_SEC);
+#include "FastLEDThreeLinesMQTT.h"
+FastLEDThreeLinesMQTT mqttLeds(&wifiMqtt, &ledLineLeft, &ledLineCenter, &ledLineRight, START_BRIGHTNESS, EFFECT_DURATION_SEC);
 
 /********** Button module ***********/
 #include <ArduinoDebounceButton.h>
-ArduinoDebounceButton btn(BTN_PIN, BUTTON_CONNECTED::GND, BUTTON_NORMAL::OPEN);
+ArduinoDebounceButton btn(BTN_PIN, BUTTON_CONNECTED::VCC, BUTTON_NORMAL::OPEN);
 
 #include <EventsQueue.hpp>
 EventsQueue<BUTTON_EVENT, 10> queue;
@@ -49,7 +61,10 @@ Ticker builtinLedTicker;
 
 void setup_FastLED()
 {
-	FastLED.addLeds<WS2812B, LED_PIN, GRB>(leds, NUM_LEDS).setCorrection(TypicalSMD5050);
+	FastLED.addLeds<WS2812B, LED_PIN_L, GRB>(ledsLeft, NUM_LEDS_LEFT).setCorrection(TypicalSMD5050);
+	FastLED.addLeds<WS2812B, LED_PIN_C, GRB>(ledsCenter, NUM_LEDS_CENTER).setCorrection(TypicalSMD5050);
+	FastLED.addLeds<WS2812B, LED_PIN_R, GRB>(ledsRight, NUM_LEDS_RIGHT).setCorrection(TypicalSMD5050);
+
 	FastLED.setMaxPowerInVoltsAndMilliamps(5, CURRENT_LIMIT);
 }
 
@@ -93,15 +108,22 @@ void processBtn()
 			{
 			case BUTTON_EVENT::Clicked:
 				mqttLeds.holdNextEffect();
+				digitalWrite(RELAY_PIN, HIGH);
+				wifiMqtt.controlAction(NEXT_CODE);
 				break;
 			case BUTTON_EVENT::DoubleClicked:
 				mqttLeds.turnOnLeds();
+				digitalWrite(RELAY_PIN, HIGH);
+				wifiMqtt.controlAction(ON_CODE);
 				break;
 			case BUTTON_EVENT::RepeatClicked:
 				mqttLeds.adjustBrightness(-10);
+				wifiMqtt.controlAction(FastLED.getBrightness());
 				break;
 			case BUTTON_EVENT::LongPressed:
 				mqttLeds.turnOffLeds();
+				digitalWrite(RELAY_PIN, LOW);
+				wifiMqtt.controlAction(OFF_CODE);
 				break;
 			default:
 				return;
@@ -115,16 +137,25 @@ void setAction_callback(uint32_t x)
 {
 	wifiMqtt.log(LOG_LEVEL::DEBUG, String(F("new action requested = ")) + String(x));
 
+	if (x <= 255)
+	{
+		mqttLeds.setBrightness(x);
+		return;
+	}
+
 	switch (x)
 	{
 	case ON_CODE:
 		mqttLeds.turnOnLeds();
+		digitalWrite(RELAY_PIN, HIGH);
 		break;
 	case OFF_CODE:
 		mqttLeds.turnOffLeds();
+		digitalWrite(RELAY_PIN, LOW);
 		break;
 	case NEXT_CODE:
 		mqttLeds.holdNextEffect();
+		digitalWrite(RELAY_PIN, HIGH);
 		break;
 	default:
 		break;
@@ -135,7 +166,10 @@ void setEffect_callback(char* data, uint16_t len)
 {
 	wifiMqtt.log(LOG_LEVEL::DEBUG, String(F("new effect requested = ")) + String(data));
 
-	mqttLeds.holdEffectByName(data);
+	if (mqttLeds.holdEffectByName(data))
+	{
+		digitalWrite(RELAY_PIN, HIGH);
+	}
 }
 
 void setup()
@@ -144,6 +178,9 @@ void setup()
 
 	pinMode(LED_BUILTIN, OUTPUT);        // Initialize the BUILTIN_LED pin as an output
 	digitalWrite(LED_BUILTIN, LOW);      // Turn the LED on by making the voltage LOW
+
+	pinMode(RELAY_PIN, OUTPUT);          // Initialize the RELAY pin as an output
+	digitalWrite(RELAY_PIN, LOW);        // Turn off leds
 
 	randomSeed(analogRead(UNPINNED_ANALOG_PIN));
 
@@ -171,6 +208,7 @@ void setup()
 	digitalWrite(LED_BUILTIN, HIGH);    // Turn the LED off by making the voltage HIGH
 
 	mqttLeds.turnOnLeds();
+	digitalWrite(RELAY_PIN, HIGH);
 }
 
 void loop()
@@ -181,4 +219,3 @@ void loop()
 
 	mqttLeds.process();
 }
-

@@ -13,8 +13,8 @@
 #define MQTT_KEY            "and password"
 
 #define MQTT_TOPIC_PUB      MQTT_USERNAME"/get/state"
-#define MQTT_TOPIC_SUB1     MQTT_USERNAME"/set/effect"
-#define MQTT_TOPIC_SUB2     MQTT_USERNAME"/set/action"
+#define MQTT_TOPIC_SET_EFFECT     MQTT_USERNAME"/set/effect"
+#define MQTT_TOPIC_SET_ACTION     MQTT_USERNAME"/set/action"
 #define MQTT_TOPIC_SUB3     MQTT_USERNAME"/set/runningString"
 
 #define ON_CODE             6735
@@ -39,8 +39,8 @@ Adafruit_MQTT_Client mqtt(&client, MQTT_SERVER, MQTT_SERVERPORT, MQTT_USERNAME, 
 
 // Setup MQTT topics
 Adafruit_MQTT_Publish   garlandState(&mqtt, MQTT_TOPIC_PUB);
-Adafruit_MQTT_Subscribe garlandEffect(&mqtt, MQTT_TOPIC_SUB1, MQTT_QOS_1);
-Adafruit_MQTT_Subscribe garlandAction(&mqtt, MQTT_TOPIC_SUB2, MQTT_QOS_1);
+Adafruit_MQTT_Subscribe garlandEffect(&mqtt, MQTT_TOPIC_SET_EFFECT, MQTT_QOS_1);
+Adafruit_MQTT_Subscribe garlandAction(&mqtt, MQTT_TOPIC_SET_ACTION, MQTT_QOS_1);
 Adafruit_MQTT_Subscribe garlandRunningString(&mqtt, MQTT_TOPIC_SUB3, MQTT_QOS_1);
 
 volatile boolean f_pingMQTT = false;

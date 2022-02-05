@@ -1,42 +1,53 @@
 #include "WifiMQTT.h"
 
-#define MQTT_DEBUG
-
-#define SERIAL_DEBUG
-#include "SerialDebug.h"
-
-#if true //__has_include("my_data_sensitive.h")
 #include "my_data_sensitive.h"
-#else
-#pragma message "default credentials are used"
 
-#define WLAN_SSID           "AP wifi name"
-#define WLAN_PASS           "and password"
-#define WLAN_HOSTNAME       "set hostname"
-
-#define MQTT_SERVER         "127.0.0.1"
-#define MQTT_SERVERPORT     1883
-#define MQTT_USERNAME       "your mqtt username"
-#define MQTT_KEY            "and password"
-
-#define MQTT_TOPIC_LOG      MQTT_USERNAME"/log"
-#define MQTT_TOPIC_SUB1     MQTT_USERNAME"/set/effect"
-#define MQTT_TOPIC_SUB2     MQTT_USERNAME"/set/action"
-
+#if !defined(WLAN_SSID) || !defined(WLAN_PASS) || !defined(WLAN_HOSTNAME) || !defined(MQTT_SERVER) || !defined(MQTT_SERVERPORT) || !defined(MQTT_USERNAME) || !defined(MQTT_KEY) || !defined(MQTT_TOPIC_LOG)
+#pragma message "Default credentials are used"
 #endif
 
-extern void performAction_callback(uint32_t x);
-extern void setEffect_callback(char* data, uint16_t len);
+#ifndef WLAN_SSID
+#define WLAN_SSID           "AP wifi name"
+#endif
 
-WifiMQTT::WifiMQTT()
+#ifndef WLAN_SSID
+#define WLAN_SSID           "AP wifi name"
+#endif
+
+#ifndef WLAN_PASS
+#define WLAN_PASS           "and password"
+#endif
+
+#ifndef WLAN_HOSTNAME
+#define WLAN_HOSTNAME       "set hostname"
+#endif
+
+#ifndef MQTT_SERVER
+#define MQTT_SERVER         "127.0.0.1"
+#endif
+
+#ifndef MQTT_SERVERPORT
+#define MQTT_SERVERPORT     1883
+#endif
+
+#ifndef MQTT_USERNAME
+#define MQTT_USERNAME       "your mqtt username"
+#endif
+
+#ifndef MQTT_KEY
+#define MQTT_KEY            "and password"
+#endif
+
+#ifndef MQTT_TOPIC_LOG
+#define MQTT_TOPIC_LOG      MQTT_USERNAME"/log"
+#endif
+
+#include "SerialDebug.h"
+
+WifiMQTT::WifiMQTT() 
+	: mqtt(&client, MQTT_SERVER, MQTT_SERVERPORT, MQTT_USERNAME, MQTT_KEY)
 {
 	mqttTicker.attach(60.0, pingMQTT_callback);
-
-	setEffect.setCallback(setEffect_callback);
-	mqtt.subscribe(&setEffect);
-
-	performAction.setCallback(performAction_callback);
-	mqtt.subscribe(&performAction);
 }
 
 WifiMQTT::~WifiMQTT()
@@ -131,7 +142,7 @@ void WifiMQTT::log(LOG_LEVEL level, String msg)
 
 	if (!keepAliveMQTT() || !mqttLog.publish(msg_keyword.c_str()))
 	{
-		log_println(F("Publish Message Failed"));
+		log_println(F("Publish LOG Message Failed"));
 	}
 }
 
@@ -166,11 +177,6 @@ void WifiMQTT::pingMQTT_callback()
 }
 
 volatile bool WifiMQTT::f_pingMQTT = false;
-
-WiFiClient              WifiMQTT::client;
-Adafruit_MQTT_Client    WifiMQTT::mqtt(&client, MQTT_SERVER, MQTT_SERVERPORT, MQTT_USERNAME, MQTT_KEY);
-Adafruit_MQTT_Subscribe WifiMQTT::setEffect(&mqtt, MQTT_TOPIC_SUB1, MQTT_QOS_1);
-Adafruit_MQTT_Subscribe WifiMQTT::performAction(&mqtt, MQTT_TOPIC_SUB2, MQTT_QOS_1);
 
 
 
