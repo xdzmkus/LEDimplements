@@ -12,6 +12,7 @@ protected:
 	LEDLine* ledLine;
 
 	uint8_t brightness;
+
 	MillisTimer effectsTicker;
 	
 public:
