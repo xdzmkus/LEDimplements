@@ -71,7 +71,7 @@ public:
 		}
 		else if (strcmp(GlowwormLedEffect<leds, numLeds>::name, effectName) == 0)
 		{
-			delete activeEffect; activeEffect = new GlowwormLedEffect<leds, numLeds>(random8(20, 50));
+			delete activeEffect; activeEffect = new GlowwormLedEffect<leds, numLeds>(random8(20, 50), numLeds >> 4);
 		}
 		else if (strcmp(RainbowLedEffect<leds, numLeds>::name, effectName) == 0)
 		{
@@ -83,7 +83,7 @@ public:
 		}
 		else if (strcmp(ThreeColorLedEffect<leds, numLeds>::name, effectName) == 0)
 		{
-			delete activeEffect; activeEffect = new ThreeColorLedEffect<leds, numLeds>(50, { CRGB::White, numLeds >> 1, CRGB::Red, numLeds >> 2, CRGB::White, numLeds >> 2 });
+			delete activeEffect; activeEffect = new ThreeColorLedEffect<leds, numLeds>(50, { CRGB::White, numLeds >> 2, CRGB::Red, numLeds >> 1, CRGB::White, numLeds >> 2 });
 		}
 		else
 		{

@@ -61,14 +61,13 @@ void WifiMQTT::init(bool configure)
 	if (configure)
 	{
 		wm.setConfigPortalTimeout(180);
-
 		wm.setConfigPortalBlocking(true);
-		if (wm.startConfigPortal(WLAN_SSID, WLAN_PASS))
-		{
-			log_println(F("WiFi Reconfigured! Rebooting..."));
-			delay(BOOT_TIMEOUT);
-			ESP.restart();
-		}
+		wm.startConfigPortal(WLAN_SSID, WLAN_PASS);
+
+		log_println(F("WiFi Reconfigured! Rebooting..."));
+
+		delay(BOOT_TIMEOUT);
+		ESP.restart();
 	}
 
 	// Set the ESP8266 to be a WiFi-client
@@ -76,6 +75,8 @@ void WifiMQTT::init(bool configure)
 	WiFi.hostname(WLAN_HOSTNAME);
 
 	log_println(WLAN_HOSTNAME);
+
+	wm.setEnableConfigPortal(false);
 
 	if (!wm.autoConnect(WLAN_SSID, WLAN_PASS))
 	{

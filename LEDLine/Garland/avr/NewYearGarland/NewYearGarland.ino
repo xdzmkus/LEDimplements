@@ -24,7 +24,7 @@
 #define NUM_LEDS 50
 #define CURRENT_LIMIT 2000
 #define MIN_BRIGHTNESS 20
-#define EFFECT_DURATION_SEC 180
+#define EFFECT_DURATION_SEC 120
 #define AUTO_BRIGHTNESS_INTERVAL_MS 3000 // 3 seconds
 
 /*********** LED Line Effects ***************/
