@@ -17,7 +17,7 @@
 #define MATRIX_W 8
 
 #define CURRENT_LIMIT 15000
-#define MIN_BRIGHTNESS 20
+#define MIN_BRIGHTNESS 50
 #define EFFECT_DURATION_SEC 60
 
 #include <ArduinoDebounceButton.h>

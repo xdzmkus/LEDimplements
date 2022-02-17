@@ -24,11 +24,9 @@ private:
 		"L_N"
 	};
 
-	static const uint8_t NUM_EFFECTS = 8;
+	static const uint8_t NUM_EFFECTS = 6;
 	LedEffectName availableEffects[NUM_EFFECTS] =
 	{
-		FireMatrixLedEffect<MATRIX, ledLine, width, height>::name,
-		StarfallMatrixLedEffect<MATRIX, ledLine, width, height>::name,
 		noiseEffects[OCEAN],
 		noiseEffects[RAINBOW],
 		noiseEffects[CLOUD],
@@ -88,14 +86,6 @@ public:
 		{
 			delete activeEffect; activeEffect = new NoiseMatrixLedEffect<MATRIX, ledLine, width, height>(random(8, 50), PartyColors_p, random(5, 50));
 			if (activeEffect != NULL) activeEffect->setId(noiseEffects[PARTY]);
-		}
-		else if (strcmp(FireMatrixLedEffect<MATRIX, ledLine, width, height>::name, effectName) == 0)
-		{
-			delete activeEffect; activeEffect = new FireMatrixLedEffect<MATRIX, ledLine, width, height>(random(10, 30));
-		}
-		else if (strcmp(StarfallMatrixLedEffect<MATRIX, ledLine, width, height>::name, effectName) == 0)
-		{
-			delete activeEffect; activeEffect = new StarfallMatrixLedEffect<MATRIX, ledLine, width, height>(random(10, 30));
 		}
 		else
 		{

@@ -54,7 +54,7 @@ public:
 
 	LEDGarland()
 	{
-		text = String("<<<  2022  >>>");
+		text = String("<<<  .....  >>>");
 	};
 
 	~LEDGarland()
