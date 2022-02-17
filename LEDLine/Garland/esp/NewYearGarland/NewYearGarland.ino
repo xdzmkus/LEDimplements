@@ -27,8 +27,8 @@ WifiMQTTLine wifiMqtt;
 #include <FastLED.h>
 CRGB leds[NUM_LEDS];
 
-#include "LEDNewYear.hpp"
-LEDNewYear<leds, NUM_LEDS> ledLine;
+#include "LEDNewYearLine.hpp"
+LEDNewYearLine<leds, NUM_LEDS> ledLine;
 
 #include "FastLEDLineMQTT.h"
 FastLEDLineMQTT mqttLeds(&wifiMqtt, &ledLine, START_BRIGHTNESS, EFFECT_DURATION_SEC);

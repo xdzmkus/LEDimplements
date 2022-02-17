@@ -9,6 +9,8 @@
 #include <StaticLEDMatrixEffects.h>
 #include <DynamicLEDMatrixEffects.h>
 
+#define NUM_LINES 4
+
 template<template <CRGB*, uint8_t, uint8_t> class MATRIX, CRGB* ledLine, uint8_t width, uint8_t height>
 class LEDGarland : public LEDMatrix
 {
@@ -26,31 +28,33 @@ private:
 		"LAVA_NOISE"
 	};
 
-	static const uint8_t NUM_EFFECTS = 6;
+	static const uint8_t NUM_EFFECTS = 16;
 	LedEffectName availableEffects[NUM_EFFECTS] =
 	{
-//		ColorsLedEffect<leds, width* height>::name,
-//		SparklesLedEffect<leds, width* height>::name,
-//		RainbowLedEffect<leds, width* height>::name,
+		ColorsLedEffect<leds, width* height>::name,
+		SparklesLedEffect<leds, width* height>::name,
+		RainbowLedEffect<leds, width* height>::name,
 
-//		BugsMatrixLedEffect<MATRIX, ledLine, width, height>::name,
+		BugsMatrixLedEffect<MATRIX, ledLine, width, height>::name,
 		noiseEffects[OCEAN],
-//		BouncingBallsMatrixLedEffect<MATRIX, ledLine, width, height>::name,
+		BouncingBallsMatrixLedEffect<MATRIX, ledLine, width, height>::name,
 		noiseEffects[RAINBOW],
-//		StarfallMatrixLedEffect<MATRIX, ledLine, width, height>::name,
+		StarfallMatrixLedEffect<MATRIX, ledLine, width, height>::name,
 		noiseEffects[CLOUD],
-//		FireMatrixLedEffect<MATRIX, ledLine, width, height>::name,
+		FireMatrixLedEffect<MATRIX, ledLine, width, height>::name,
 		noiseEffects[FOREST],
-//		SinusMatrixLedEffect<MATRIX, ledLine, width, height>::name,
+		SinusMatrixLedEffect<MATRIX, ledLine, width, height>::name,
 		noiseEffects[PARTY],
-//		GravityMatrixLedEffect<MATRIX, ledLine, width, height>::name,
+		GravityMatrixLedEffect<MATRIX, ledLine, width, height>::name,
 		noiseEffects[LAVA],
+		BouncingLinesMatrixLedEffect<MATRIX, ledLine, width, height, NUM_LINES>::name,
 	};
 
 public:
 
 	LEDGarland()
 	{
+		text = String("<<<  2022  >>>");
 	};
 
 	~LEDGarland()
@@ -69,7 +73,6 @@ public:
 
 	bool setEffectByName(LedEffectName effectName) override
 	{
-/*
 		if (strcmp(BouncingLinesMatrixLedEffect<MATRIX, ledLine, width, height, NUM_LINES>::name, effectName) == 0)
 		{
 			delete activeEffect; activeEffect = new BouncingLinesMatrixLedEffect<MATRIX, ledLine, width, height, NUM_LINES>(random(5, 20));
@@ -98,7 +101,7 @@ public:
 		{
 			delete activeEffect; activeEffect = new StarfallMatrixLedEffect<MATRIX, ledLine, width, height>(random(10, 30));
 		}
-		else */if (strcmp(noiseEffects[LAVA], effectName) == 0)
+		else if (strcmp(noiseEffects[LAVA], effectName) == 0)
 		{
 			delete activeEffect; activeEffect = new NoiseMatrixLedEffect<MATRIX, ledLine, width, height>(random(8, 30), LavaColors_p, random(5, 50));
 			if (activeEffect != NULL) activeEffect->setId(noiseEffects[LAVA]);
@@ -128,7 +131,7 @@ public:
 			delete activeEffect; activeEffect = new NoiseMatrixLedEffect<MATRIX, ledLine, width, height>(random(8, 50), PartyColors_p, random(5, 50));
 			if (activeEffect != NULL) activeEffect->setId(noiseEffects[PARTY]);
 		}
-/*		else if (strcmp(ColorsLedEffect<leds, width * height>::name, effectName) == 0)
+		else if (strcmp(ColorsLedEffect<leds, width * height>::name, effectName) == 0)
 		{
 			delete activeEffect; activeEffect = new ColorsLedEffect<leds, width* height>(random(10, 30));
 		}
@@ -140,7 +143,7 @@ public:
 		{
 			delete activeEffect; activeEffect = new RainbowLedEffect<leds, width* height>(random(10, 30));
 		}
-*/		else
+		else
 		{
 			return false;
 		}

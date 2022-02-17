@@ -50,7 +50,7 @@ FastLEDThreeLinesMQTT mqttLeds(&wifiMqtt, &ledLineLeft, &ledLineCenter, &ledLine
 ArduinoDebounceButton btn(BTN_PIN, BUTTON_CONNECTED::VCC, BUTTON_NORMAL::OPEN);
 
 #include <EventsQueue.hpp>
-EventsQueue<BUTTON_EVENT, 10> queue;
+EventsQueue<BUTTON_EVENT, 20> queue;
 
 #include <Ticker.h>
 Ticker btnTicker;

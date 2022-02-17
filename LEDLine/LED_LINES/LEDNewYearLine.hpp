@@ -1,14 +1,14 @@
-// LEDNewYear.hpp
+// LEDNewYearLine.hpp
 
-#ifndef _LEDNEWYEAR_HPP_
-#define _LEDNEWYEAR_HPP_
+#ifndef _LEDNEWYEARLINE_HPP_
+#define _LEDNEWYEARLINE_HPP_
 
 #include <LEDLine.h>
 #include <DynamicLEDLineEffects.h>
 #include <UniversalLEDLineEffects.h>
 
 template <CRGB* const leds, const uint16_t numLeds>
-class LEDNewYear : public LEDLine
+class LEDNewYearLine : public LEDLine
 {
 private:
 
@@ -29,11 +29,11 @@ private:
 
 public:
 
-	LEDNewYear()
+	LEDNewYearLine()
 	{
 	};
 
-	~LEDNewYear()
+	~LEDNewYearLine()
 	{
 	};
 

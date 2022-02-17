@@ -32,8 +32,8 @@
 #include <FastLED.h>
 CRGB leds[NUM_LEDS];
 
-#include "LEDNewYear.hpp"
-LEDNewYear<leds, NUM_LEDS> ledLine;
+#include "LEDNewYearLine.hpp"
+LEDNewYearLine<leds, NUM_LEDS> ledLine;
 
 #ifdef SERIAL_DEBUG
 #include "FastLEDLineLog.h"
