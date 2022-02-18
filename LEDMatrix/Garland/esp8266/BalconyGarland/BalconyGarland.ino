@@ -3,7 +3,7 @@
 #include "SerialDebug.h"
 
 #if defined(ESP8266)
-#define LED_PIN  D5 // leds pin
+#define LED_PIN  D1 // D5 leds pin - with esp8266 boards v2.7.4 wire to D5 on NodeMCU but define D1 :)
 #define BTN_PIN  D0 // button pin
 #define ENC1_PIN D1 // encoder S1 pin
 #define ENC2_PIN D2	// encoder S2 pin
@@ -20,7 +20,7 @@
 #define MATRIX_W 36
 
 #define CURRENT_LIMIT 12000
-#define START_BRIGHTNESS 100
+#define START_BRIGHTNESS 80
 #define EFFECT_DURATION_SEC 60
 
 #include <Ticker.h>
@@ -134,6 +134,12 @@ void handleButtonEvent(const DebounceButton* button, BUTTON_EVENT eventType)
 void setAction_callback(uint32_t x)
 {
 	wifiMqtt.log(LOG_LEVEL::DEBUG, String(F("new action requested = ")) + String(x));
+
+	if (x <= 255)
+	{
+		mqttLeds.setBrightness(x);
+		return;
+	}
 
 	switch (x)
 	{
